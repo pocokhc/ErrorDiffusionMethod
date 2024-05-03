@@ -33,7 +33,7 @@ https://web.archive.org/web/19991124023203/http://village.infoweb.ne.jp:80/~fwhz
 
 # Development Version
 
-Python : 3.12.2  
-Tensorflow : 2.16.1  
-Torch : 2.2.1  
+Python : 3.10.11  
+Tensorflow-gpu : 2.10.1  
+Torch : 2.1.1+cu118  
 
