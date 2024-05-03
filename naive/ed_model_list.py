@@ -26,12 +26,14 @@ class EDNeuron:
         activate: str,
         bias: float = 0.8,
         lr: float = 0.8,
+        quantization: bool = False,
         name: str = "",
     ) -> None:
         self.in_neuron_types = ["+", "-"] + in_neuron_types[:]
         self.neuron_type = neuron_type
         self.bias = bias
         self.lr = lr
+        self.quantization = quantization
         self.name = name
 
         if activate == "sigmoid":
@@ -78,9 +80,18 @@ class EDNeuron:
         x = [self.bias, self.bias] + x
         assert len(self.weights) == len(x)
 
+        if self.quantization:
+            a = sum(self.weights) / len(self.weights)
+            if a < 0.0001:
+                a = 0.0001
+
         y = 0
         for i in range(len(self.weights)):
-            y += x[i] * self.weights[i] * self.forward_ope_list[i]
+            if self.quantization:
+                w = 1 if self.weights[i] / a > 0.5 else 0
+            else:
+                w = self.weights[i]
+            y += x[i] * w * self.forward_ope_list[i]
 
         if training:
             self.prev_in = x
@@ -141,6 +152,7 @@ class EDModel:
         out_type: str = "sigmoid",
         bias: float = 0.8,
         lr: float = 0.1,
+        quantization: bool = False,
     ) -> None:
         self.lr = lr
 
@@ -158,6 +170,7 @@ class EDModel:
                         activate=activate,
                         bias=bias,
                         lr=lr,
+                        quantization=quantization,
                         name=f"h{j}{i}",
                     )
                 )
@@ -165,7 +178,15 @@ class EDModel:
             in_neurons = out_neurons
 
         # --- output
-        self.out_neuron = EDNeuron(in_neurons, "+", activate=out_type, bias=bias, lr=lr, name="out")
+        self.out_neuron = EDNeuron(
+            in_neurons,
+            "+",
+            activate=out_type,
+            bias=bias,
+            lr=lr,
+            quantization=quantization,
+            name="out",
+        )
 
     def forward(self, inputs, training=False):
         x = []
@@ -186,9 +207,9 @@ class EDModel:
         diff = target - x
         if diff > 0:
             upper_rate = 1.0
-            lower_rate = 0.0
+            lower_rate = -0.0
         else:
-            upper_rate = 0.0
+            upper_rate = -0.0
             lower_rate = 1.0
 
         # update

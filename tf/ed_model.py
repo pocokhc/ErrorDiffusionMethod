@@ -29,10 +29,12 @@ class EDDense(keras.layers.Layer):
         activate: str,
         out_size: int,
         bias: float = 0.8,
+        quantization: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.bias = bias
+        self.quantization = quantization
         in_neuron_types = in_neuron_types[:] + ["+", "-"]
 
         self.in_features = len(in_neuron_types)
@@ -87,7 +89,13 @@ class EDDense(keras.layers.Layer):
         # (batch, out_num, x) -> (batch, out_num, x + bias)
         bias = tf.fill((tf.shape(x)[0], self.out_size, 2), self.bias)
         x = tf.concat([x, bias], -1)
-        w = self.weight * self.forward_ope
+        if self.quantization:
+            a = tf.reduce_mean(self.weight, axis=1, keepdims=True)
+            w = self.weight / tf.maximum(a, 0.00001)
+            w = tf.cast(tf.where(w > 0.5, 1, 0), tf.float32)
+        else:
+            w = self.weight
+        w = w * self.forward_ope
 
         # x: (batch, out_num,       1, in_size)
         # w: (    1, out_num, in_size, out_size)
@@ -140,22 +148,23 @@ class EDModel(keras.Model):
         training_mode: str = "mse",
         lr: float = 0.1,
         bias: float = 0.8,
+        quantization: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.output_num = output_num
         self.training_mode = training_mode
         self.lr = lr
-        self.bias = bias
+        self.quantization = quantization
         self.layer_num = len(layers)
 
         in_neurons = ["+"] * input_num + ["-"] * input_num
-        self.h_layers = []
+        self.h_layers: list[EDDense] = []
         for size, act_type in layers:
             out_neurons = [("+" if n % 2 == 0 else "-") for n in range(size)]
-            self.h_layers.append(EDDense(in_neurons, out_neurons, act_type, output_num))
+            self.h_layers.append(EDDense(in_neurons, out_neurons, act_type, output_num, bias, quantization))
             in_neurons = out_neurons
-        self.h_layers.append(EDDense(in_neurons, ["+"], out_type, output_num))
+        self.h_layers.append(EDDense(in_neurons, ["+"], out_type, output_num, bias, quantization))
 
     def call(self, x, training=False):
         # (batch, x) -> (batch, out_num, x*2)

@@ -34,23 +34,15 @@ def _simple_run(dataset, model, N):
         print(f"{x} -> {y:8.5f}, target {target}")
 
 
-def main_not(is_single_model: bool):
-    if is_single_model:
-        model = EDModelSingle(
-            input_num=1,
-            layers=[(2, "sigmoid")],
-            out_type="sigmoid",
-            lr=0.1,
-        )
-    else:
-        model = EDModel(
-            input_num=1,
-            output_num=1,
-            layers=[(2, "sigmoid")],
-            out_type="sigmoid",
-            training_mode="mse",
-            lr=0.1,
-        )
+def main_not_single_model():
+    model = EDModelSingle(
+        input_num=1,
+        layers=[
+            (2, "sigmoid"),
+        ],
+        out_type="sigmoid",
+        lr=0.1,
+    )
     dataset = [
         [[0], [1]],
         [[1], [0]],
@@ -58,23 +50,54 @@ def main_not(is_single_model: bool):
     _simple_run(dataset, model, 100)
 
 
-def main_xor(is_single_model: bool):
-    if is_single_model:
-        model = EDModelSingle(
-            input_num=2,
-            layers=[(8, "sigmoid"), (8, "sigmoid")],
-            out_type="sigmoid",
-            lr=0.8,
-        )
-    else:
-        model = EDModel(
-            input_num=2,
-            output_num=1,
-            layers=[(8, "sigmoid"), (8, "sigmoid")],
-            out_type="sigmoid",
-            training_mode="mse",
-            lr=0.8,
-        )
+def main_not():
+    model = EDModel(
+        input_num=1,
+        output_num=1,
+        layers=[
+            (2, "sigmoid"),
+        ],
+        out_type="sigmoid",
+        training_mode="mse",
+        lr=0.1,
+        quantization=False,
+    )
+    dataset = [
+        [[0], [1]],
+        [[1], [0]],
+    ]
+    _simple_run(dataset, model, 100)
+
+
+def main_not_quantization():
+    model = EDModel(
+        input_num=1,
+        output_num=1,
+        layers=[
+            (2, "sigmoid"),
+        ],
+        out_type="sigmoid",
+        training_mode="mse",
+        lr=0.1,
+        quantization=True,
+    )
+    dataset = [
+        [[0], [1]],
+        [[1], [0]],
+    ]
+    _simple_run(dataset, model, 100)
+
+
+def main_xor_single_model():
+    model = EDModelSingle(
+        input_num=2,
+        layers=[
+            (8, "sigmoid"),
+            (8, "sigmoid"),
+        ],
+        out_type="sigmoid",
+        lr=0.8,
+    )
     dataset = [
         [[0, 0], [0]],
         [[1, 0], [1]],
@@ -84,8 +107,54 @@ def main_xor(is_single_model: bool):
     _simple_run(dataset, model, 100)
 
 
+def main_xor():
+    model = EDModel(
+        input_num=2,
+        output_num=1,
+        layers=[
+            (8, "sigmoid"),
+            (8, "sigmoid"),
+        ],
+        out_type="sigmoid",
+        training_mode="mse",
+        lr=0.8,
+        quantization=False,
+    )
+    dataset = [
+        [[0, 0], [0]],
+        [[1, 0], [1]],
+        [[0, 1], [1]],
+        [[1, 1], [0]],
+    ]
+    _simple_run(dataset, model, 100)
+
+
+def main_xor_quantization():
+    model = EDModel(
+        input_num=2,
+        output_num=1,
+        layers=[
+            (8, "sigmoid"),
+            (8, "sigmoid"),
+        ],
+        out_type="sigmoid",
+        training_mode="mse",
+        lr=0.8,
+        quantization=True,
+    )
+    dataset = [
+        [[0, 0], [0]],
+        [[1, 0], [1]],
+        [[0, 1], [1]],
+        [[1, 1], [0]],
+    ]
+    _simple_run(dataset, model, 1000)
+
+
 if __name__ == "__main__":
-    # main_not(is_single_model=True)
-    # main_not(is_single_model=False)
-    # main_xor(is_single_model=True)
-    main_xor(is_single_model=False)
+    # main_not_single_model()
+    # main_not()
+    # main_not_quantization()
+    # main_xor_single_model()
+    main_xor()
+    # main_xor_quantization()

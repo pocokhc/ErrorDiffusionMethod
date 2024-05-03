@@ -149,7 +149,7 @@ def train_single_ed_model(layer_num, unit_num, activation, lr, batch_size, epoch
     return acc_list, total_time
 
 
-def train_ed_model(layer_num, unit_num, activation, lr, batch_size, epochs):
+def train_ed_model(layer_num, unit_num, activation, lr, quantization, batch_size, epochs):
     layers = [(unit_num, activation) for _ in range(layer_num)]
     model = EDModel(
         input_num=28 * 28,
@@ -158,6 +158,7 @@ def train_ed_model(layer_num, unit_num, activation, lr, batch_size, epochs):
         out_type="linear",
         training_mode="ce",
         lr=lr,
+        quantization=quantization,
         device=device,
     )
 
@@ -208,10 +209,15 @@ def main(layer_num, unit_num, activation, lr, batch_size, epochs):
     name_list.append("EDMethod(single)")
     time_list.append(total_time)
 
-    acc_list, total_time = train_ed_model(layer_num, unit_num, activation, lr, batch_size, epochs)
+    acc_list, total_time = train_ed_model(layer_num, unit_num, activation, lr, False, batch_size, epochs)
     plt.plot(acc_list, label="EDMethod")
     name_list.append("EDMethod")
     time_list.append(total_time)
+
+    # acc_list, total_time = train_ed_model(layer_num, unit_num, activation, lr, True, batch_size, epochs)
+    # plt.plot(acc_list, label="EDMethod(quantization)")
+    # name_list.append("EDMethod(quantization)")
+    # time_list.append(total_time)
 
     plt.ylim(0.1, 1)
     plt.grid()
@@ -227,3 +233,4 @@ if __name__ == "__main__":
     # main(layer_num=5, unit_num=32, activation="sigmoid", lr=0.0005, batch_size=512, epochs=20)
     # main(layer_num=5, unit_num=32, activation="relu", lr=0.001, batch_size=512, epochs=10)
     # main(layer_num=50, unit_num=16, activation="sigmoid", lr=0.01, batch_size=512, epochs=10)
+    # main(layer_num=5, unit_num=32, activation="sigmoid", lr=0.001, batch_size=1024, epochs=10)

@@ -137,16 +137,15 @@ class EDModelSingle(keras.Model):
     ):
         super().__init__(**kwargs)
         self.lr = lr
-        self.bias = bias
         self.layer_num = len(layers)
 
         in_neurons = ["+"] * input_num + ["-"] * input_num
         self.h_layers = []
         for size, act_type in layers:
             out_neurons = [("+" if n % 2 == 0 else "-") for n in range(size)]
-            self.h_layers.append(EDDense(in_neurons, out_neurons, act_type))
+            self.h_layers.append(EDDense(in_neurons, out_neurons, act_type, bias))
             in_neurons = out_neurons
-        self.h_layers.append(EDDense(in_neurons, ["+"], out_type))
+        self.h_layers.append(EDDense(in_neurons, ["+"], out_type, bias))
 
         self.build((None, input_num))
 

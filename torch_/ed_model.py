@@ -29,10 +29,12 @@ class EDDense(nn.Module):
         activate: str,
         out_size: int,
         bias: float = 0.8,
+        quantization: bool = False,
         device: Any = "cpu",
     ):
         super().__init__()
         self.bias = bias
+        self.quantization = quantization
         self.device = device
         in_neuron_types = in_neuron_types[:] + ["+", "-"]
 
@@ -83,7 +85,13 @@ class EDDense(nn.Module):
         # (batch, out_num, x) -> (batch, out_num, x + bias)
         bias = torch.full((x.size(0), self.out_size, 2), self.bias).to(self.device)
         x = torch.cat([x, bias], dim=-1)
-        w = self.weight * self.forward_ope
+        if self.quantization:
+            a = self.weight.mean(dim=1, keepdim=True)
+            w = self.weight / torch.maximum(a, torch.tensor(0.00001))
+            w = torch.where(w > 0.5, torch.tensor(1), torch.tensor(0)).float()
+        else:
+            w = self.weight
+        w = w * self.forward_ope
 
         # x: (batch, out_num,       1, in_size)
         # w: (    1, out_num, in_size, out_size)
@@ -136,13 +144,13 @@ class EDModel(nn.Module):
         training_mode: str = "mse",
         lr: float = 0.1,
         bias: float = 0.8,
+        quantization: bool = False,
         device: Any = "cpu",
     ):
         super().__init__()
         self.output_num = output_num
         self.training_mode = training_mode
         self.lr = lr
-        self.bias = bias
         self.device = device
         self.layer_num = len(layers)
 
@@ -150,9 +158,9 @@ class EDModel(nn.Module):
         self.layers = nn.ModuleList()
         for size, act_type in layers:
             out_neurons = [("+" if n % 2 == 0 else "-") for n in range(size)]
-            self.layers.append(EDDense(in_neurons, out_neurons, act_type, output_num, device=device))
+            self.layers.append(EDDense(in_neurons, out_neurons, act_type, output_num, bias, quantization, device))
             in_neurons = out_neurons
-        self.layers.append(EDDense(in_neurons, ["+"], out_type, output_num, device=device))
+        self.layers.append(EDDense(in_neurons, ["+"], out_type, output_num, bias, quantization, device))
 
     def forward(self, x: torch.Tensor):
         # (batch, x) -> (batch, out_num, x*2)

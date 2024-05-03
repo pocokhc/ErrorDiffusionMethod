@@ -58,7 +58,7 @@ def create_single_ed_model(layer_num, unit_num, lr, activation):
     return model
 
 
-def create_ed_model(layer_num, unit_num, lr, activation):
+def create_ed_model(layer_num, unit_num, lr, activation, quantization=False):
     layers = [(unit_num, activation) for _ in range(layer_num)]
     model = EDModel(
         input_num=28 * 28,
@@ -67,6 +67,7 @@ def create_ed_model(layer_num, unit_num, lr, activation):
         out_type="linear",
         training_mode="ce",
         lr=lr,
+        quantization=quantization,
     )
     model.compile(metrics=["accuracy"])
     return model
@@ -80,6 +81,7 @@ def main(layer_num, unit_num, activation, lr, epochs, batch_size):
         ["TF", create_tf_model(layer_num, unit_num, lr, activation)],
         ["EDMethod(single)", create_single_ed_model(layer_num, unit_num, lr, activation)],
         ["EDMethod", create_ed_model(layer_num, unit_num, lr, activation)],
+        # ["EDMethod(quantization)", create_ed_model(layer_num, unit_num, lr, activation, quantization=True)],
     ]:
         t0 = time.time()
         history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(x_test, y_test))
@@ -103,3 +105,4 @@ if __name__ == "__main__":
     # main(layer_num=5, unit_num=32, activation="sigmoid", lr=0.0005, batch_size=512, epochs=20)
     # main(layer_num=5, unit_num=32, activation="relu", lr=0.0005, batch_size=512, epochs=20)
     # main(layer_num=100, unit_num=16, activation="sigmoid", lr=0.01, batch_size=512, epochs=10)
+    # main(layer_num=5, unit_num=64, activation="sigmoid", lr=0.001, batch_size=256, epochs=20)
