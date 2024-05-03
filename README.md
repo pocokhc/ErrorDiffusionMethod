@@ -10,7 +10,7 @@
 https://web.archive.org/web/19991124023203/http://village.infoweb.ne.jp:80/~fwhz9346/ed.htm
 
 
-# Usage
+# Samples
 
 ```
 # naive
